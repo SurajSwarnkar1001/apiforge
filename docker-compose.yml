@@ -1,20 +1,16 @@
 version: '3.8'
 
 services:
-  postgres:
-    image: postgres:16-alpine
-    container_name: apiforge-postgres
+  mongodb:
+    image: mongo:7.0
+    container_name: apiforge-mongodb
     restart: unless-stopped
-    environment:
-      POSTGRES_USER: apiforge_user
-      POSTGRES_PASSWORD: apiforge_secret
-      POSTGRES_DB: apiforge_db
     ports:
-      - "5432:5432"
+      - "27017:27017"
     volumes:
-      - pgdata:/var/lib/postgresql/data
+      - mongodata:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U apiforge_user -d apiforge_db"]
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -46,13 +42,13 @@ services:
       PORT: 4000
       API_BASE_URL: http://localhost:4000
       ALLOWED_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:80
-      DATABASE_URL: postgresql://apiforge_user:apiforge_secret@postgres:5432/apiforge_db?schema=public
+      DATABASE_URL: mongodb://mongodb:27017/apiforge_db?directConnection=true
       REDIS_URL: redis://redis:6379
       JWT_SECRET: super-secret-jwt-key-change-in-production-min-32-chars-length
       ENCRYPTION_KEY: 0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef
       ALLOW_LOCAL_TARGETS: "false"
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -64,11 +60,11 @@ services:
     container_name: apiforge-discovery-worker
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://apiforge_user:apiforge_secret@postgres:5432/apiforge_db?schema=public
+      DATABASE_URL: mongodb://mongodb:27017/apiforge_db?directConnection=true
       REDIS_URL: redis://redis:6379
       ALLOW_LOCAL_TARGETS: "false"
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -80,11 +76,11 @@ services:
     container_name: apiforge-loadtest-worker
     restart: unless-stopped
     environment:
-      DATABASE_URL: postgresql://apiforge_user:apiforge_secret@postgres:5432/apiforge_db?schema=public
+      DATABASE_URL: mongodb://mongodb:27017/apiforge_db?directConnection=true
       REDIS_URL: redis://redis:6379
       ALLOW_LOCAL_TARGETS: "false"
     depends_on:
-      postgres:
+      mongodb:
         condition: service_healthy
       redis:
         condition: service_healthy
@@ -101,5 +97,5 @@ services:
       - backend
 
 volumes:
-  pgdata:
+  mongodata:
   redisdata:
