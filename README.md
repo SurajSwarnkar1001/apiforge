@@ -8,7 +8,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-v4.0-38bdf8?style=for-the-badge&logo=tailwindcss)
 ![k6](https://img.shields.io/badge/k6-v0.54-7d67ff?style=for-the-badge&logo=k6)
 ![Prisma](https://img.shields.io/badge/Prisma-6.4-2D3748?style=for-the-badge&logo=prisma)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-336791?style=for-the-badge&logo=postgresql)
+![MongoDB](https://img.shields.io/badge/MongoDB-7.0-47A248?style=for-the-badge&logo=mongodb)
 ![Redis](https://img.shields.io/badge/Redis-7-DC382D?style=for-the-badge&logo=redis)
 
 **An intelligent, developer-centric platform to discover API endpoints, inspect contracts, verify target authorization, and execute distributed k6 load tests with real-time telemetry streaming.**
@@ -53,7 +53,7 @@
                │ Prisma ORM                │ BullMQ / PubSub
                ▼                           ▼
 ┌──────────────────────────────┐ ┌────────────────────────────────────────────┐
-│      POSTGRESQL DATABASE     │ │                 REDIS 7                    │
+│       MONGODB DATABASE       │ │                 REDIS 7                    │
 │  - Users, Projects, Scans    │ │  - discovery-queue (Discovery Jobs)        │
 │  - Endpoints, LoadTests      │ │  - loadtest-queue (k6 Benchmark Jobs)      │
 │  - Results, Metrics, Audit   │ │  - Pub/Sub Channels (loadtest:metrics:*)   │
@@ -168,7 +168,7 @@ User dashboard par **[STOP TEST]** button dabate hi Fastify backend Redis channe
 
 ### Backend
 - **Framework**: Node.js + Fastify v5 (TypeScript)
-- **Database & ORM**: PostgreSQL + Prisma ORM
+- **Database & ORM**: MongoDB 7.0 + Prisma ORM (Native BSON Documents & ObjectIds)
 - **Queue & Realtime**: BullMQ + Redis 7 + WebSockets
 - **Validation**: Zod + IPAddr.js
 - **Security**: AES-256-GCM + BcryptJS + Fastify JWT
@@ -201,7 +201,7 @@ load_testing/
 ├── backend/                        # Fastify API Server
 │   ├── package.json
 │   ├── prisma/
-│   │   ├── schema.prisma           # Postgres data models & relations
+│   │   ├── schema.prisma           # MongoDB data models & ObjectIds
 │   │   └── seed.ts                 # Database seeder
 │   └── src/
 │       ├── config/env.ts           # Zod validated configuration
@@ -255,23 +255,23 @@ load_testing/
 
 ### 1. Prerequisites
 - **Node.js**: v20 or v22+
-- **Docker & Docker Compose** (for PostgreSQL, Redis, and worker containers)
+- **Docker & Docker Compose** (for MongoDB, Redis, and worker containers)
 
 ### 2. Install Dependencies
 ```bash
 npm install
 ```
 
-### 3. Generate Prisma ORM Client
+### 3. Generate Prisma ORM Client (MongoDB)
 ```bash
 cd backend
 npx prisma generate
 cd ..
 ```
 
-### 4. Start Local Infrastructure
+### 4. Start Local Infrastructure (MongoDB & Redis)
 ```bash
-docker compose up -d postgres redis
+docker compose up -d mongodb redis
 ```
 
 ### 5. Seed Initial Data (Optional Demo Data)

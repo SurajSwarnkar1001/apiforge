@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding APIForge database...');
+  console.log('🌱 Seeding APIForge MongoDB database...');
 
   // 1. Create Default Admin User
   const salt = await bcrypt.genSalt(10);
@@ -14,7 +14,7 @@ async function main() {
     where: { email: 'alex.developer@apiforge.io' },
     update: {},
     create: {
-      id: 'usr_forge_001',
+      id: '65f1a2b3c4d5e6f7a8b9c001',
       email: 'alex.developer@apiforge.io',
       name: 'Alex Vance',
       passwordHash,
@@ -26,10 +26,10 @@ async function main() {
 
   // 2. Create Project
   const project = await prisma.project.upsert({
-    where: { id: 'proj_ecommerce_01' },
+    where: { id: '65f1a2b3c4d5e6f7a8b9c002' },
     update: {},
     create: {
-      id: 'proj_ecommerce_01',
+      id: '65f1a2b3c4d5e6f7a8b9c002',
       name: 'Novastone E-Commerce API',
       targetUrl: 'https://api.novastore-demo.io',
       normalizedUrl: 'https://api.novastore-demo.io',
@@ -52,7 +52,7 @@ async function main() {
     },
     update: {},
     create: {
-      id: 'ep_novastore_01',
+      id: '65f1a2b3c4d5e6f7a8b9c003',
       projectId: project.id,
       method: 'GET',
       url: 'https://api.novastore-demo.io/api/v1/products',
@@ -85,7 +85,7 @@ async function main() {
     },
     update: {},
     create: {
-      id: 'ep_novastore_03',
+      id: '65f1a2b3c4d5e6f7a8b9c004',
       projectId: project.id,
       method: 'POST',
       url: 'https://api.novastore-demo.io/api/v1/cart/items',
@@ -106,10 +106,10 @@ async function main() {
 
   // 4. Create Historical Load Test & Result
   const loadTest = await prisma.loadTest.upsert({
-    where: { id: 'lt_catalog_stress_02' },
+    where: { id: '65f1a2b3c4d5e6f7a8b9c005' },
     update: {},
     create: {
-      id: 'lt_catalog_stress_02',
+      id: '65f1a2b3c4d5e6f7a8b9c005',
       projectId: project.id,
       endpointId: ep1.id,
       name: 'Product Catalog - Peak Flash Sale Stress Test',
@@ -136,7 +136,7 @@ async function main() {
     where: { loadTestId: loadTest.id },
     update: {},
     create: {
-      id: 'res_catalog_stress_02',
+      id: '65f1a2b3c4d5e6f7a8b9c006',
       loadTestId: loadTest.id,
       totalRequests: 28450,
       successfulRequests: 28222,
@@ -160,7 +160,7 @@ async function main() {
     },
   });
 
-  console.log('✅ Seeding completed successfully!');
+  console.log('✅ MongoDB Seeding completed successfully!');
 }
 
 main()

@@ -1,5 +1,5 @@
 datasource db {
-  provider = "postgresql"
+  provider = "mongodb"
   url      = env("DATABASE_URL")
 }
 
@@ -74,7 +74,7 @@ enum LoadTestStatus {
 }
 
 model User {
-  id           String      @id @default(uuid())
+  id           String      @id @default(auto()) @map("_id") @db.ObjectId
   email        String      @unique
   passwordHash String
   name         String
@@ -88,7 +88,7 @@ model User {
 }
 
 model Project {
-  id                    String             @id @default(uuid())
+  id                    String             @id @default(auto()) @map("_id") @db.ObjectId
   name                  String
   targetUrl             String
   normalizedUrl         String
@@ -96,7 +96,7 @@ model Project {
   verificationMethod    VerificationMethod @default(DNS_TXT)
   verificationToken     String             @default(uuid())
   verificationCheckedAt DateTime?
-  userId                String
+  userId                String             @db.ObjectId
   user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt             DateTime           @default(now())
   updatedAt             DateTime           @updatedAt
@@ -110,8 +110,8 @@ model Project {
 }
 
 model Scan {
-  id              String      @id @default(uuid())
-  projectId       String
+  id              String      @id @default(auto()) @map("_id") @db.ObjectId
+  projectId       String      @db.ObjectId
   project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
   status          ScanStatus  @default(PENDING)
   strategies      Json        @default("[]")
@@ -127,10 +127,10 @@ model Scan {
 }
 
 model Endpoint {
-  id                  String          @id @default(uuid())
-  projectId           String
+  id                  String          @id @default(auto()) @map("_id") @db.ObjectId
+  projectId           String          @db.ObjectId
   project             Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  scanId              String?
+  scanId              String?         @db.ObjectId
   scan                Scan?           @relation(fields: [scanId], references: [id], onDelete: SetNull)
   method              HttpMethod
   url                 String
@@ -158,10 +158,10 @@ model Endpoint {
 }
 
 model LoadTest {
-  id                 String          @id @default(uuid())
-  projectId          String
+  id                 String          @id @default(auto()) @map("_id") @db.ObjectId
+  projectId          String          @db.ObjectId
   project            Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  endpointId         String?
+  endpointId         String?         @db.ObjectId
   endpoint           Endpoint?       @relation(fields: [endpointId], references: [id], onDelete: SetNull)
   name               String
   status             LoadTestStatus  @default(QUEUED)
@@ -190,8 +190,8 @@ model LoadTest {
 }
 
 model LoadTestResult {
-  id                  String      @id @default(uuid())
-  loadTestId          String      @unique
+  id                  String      @id @default(auto()) @map("_id") @db.ObjectId
+  loadTestId          String      @unique @db.ObjectId
   loadTest            LoadTest    @relation(fields: [loadTestId], references: [id], onDelete: Cascade)
   totalRequests       Int         @default(0)
   successfulRequests  Int         @default(0)
@@ -214,8 +214,8 @@ model LoadTestResult {
 }
 
 model LoadTestMetric {
-  id                 String    @id @default(uuid())
-  loadTestId         String
+  id                 String    @id @default(auto()) @map("_id") @db.ObjectId
+  loadTestId         String    @db.ObjectId
   loadTest           LoadTest  @relation(fields: [loadTestId], references: [id], onDelete: Cascade)
   timestamp          DateTime  @default(now())
   vus                Int       @default(0)
@@ -240,10 +240,10 @@ model LoadTestMetric {
 }
 
 model AuditLog {
-  id        String   @id @default(uuid())
-  userId    String
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  projectId String?
+  projectId String?  @db.ObjectId
   project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
   action    String
   ipAddress String?

@@ -10,7 +10,7 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(4000),
   API_BASE_URL: z.string().default('http://localhost:4000'),
   ALLOWED_ORIGINS: z.string().default('http://localhost:5173,http://localhost:3000'),
-  DATABASE_URL: z.string().default('postgresql://apiforge_user:apiforge_secret@localhost:5432/apiforge_db?schema=public'),
+  DATABASE_URL: z.string().default('mongodb://localhost:27017/apiforge_db?directConnection=true'),
   REDIS_URL: z.string().default('redis://localhost:6379'),
   JWT_SECRET: z.string().default('super-secret-jwt-key-change-in-production-min-32-chars-length'),
   ENCRYPTION_KEY: z.string().default('0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef'),
