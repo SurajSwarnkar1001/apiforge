@@ -1,0 +1,256 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum VerificationMethod {
+  DNS_TXT
+  HTTP_FILE
+  SELF_DECLARATION
+}
+
+enum HttpMethod {
+  GET
+  POST
+  PUT
+  DELETE
+  PATCH
+  HEAD
+  OPTIONS
+}
+
+enum ConfidenceLevel {
+  HIGH
+  MEDIUM
+  LOW
+}
+
+enum DiscoverySource {
+  OPENAPI
+  PLAYWRIGHT
+  JS_BUNDLE
+  MANUAL
+}
+
+enum AuthType {
+  NONE
+  BEARER
+  API_KEY
+  BASIC
+  COOKIE
+  CUSTOM_HEADER
+}
+
+enum ScanStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum LoadTestPreset {
+  SMOKE
+  LOAD
+  STRESS
+  SPIKE
+  CUSTOM
+}
+
+enum LoadTestStatus {
+  QUEUED
+  RUNNING
+  STOPPED
+  COMPLETED
+  FAILED
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String
+  name         String
+  role         Role        @default(MEMBER)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  projects     Project[]
+  auditLogs    AuditLog[]
+
+  @@map("users")
+}
+
+model Project {
+  id                    String             @id @default(uuid())
+  name                  String
+  targetUrl             String
+  normalizedUrl         String
+  isVerified            Boolean            @default(false)
+  verificationMethod    VerificationMethod @default(DNS_TXT)
+  verificationToken     String             @default(uuid())
+  verificationCheckedAt DateTime?
+  userId                String
+  user                  User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+  endpoints             Endpoint[]
+  scans                 Scan[]
+  loadTests             LoadTest[]
+  auditLogs             AuditLog[]
+
+  @@index([userId])
+  @@map("projects")
+}
+
+model Scan {
+  id              String      @id @default(uuid())
+  projectId       String
+  project         Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status          ScanStatus  @default(PENDING)
+  strategies      Json        @default("[]")
+  endpointsFound  Int         @default(0)
+  error           String?
+  startedAt       DateTime    @default(now())
+  completedAt     DateTime?
+  createdAt       DateTime    @default(now())
+  endpoints       Endpoint[]
+
+  @@index([projectId])
+  @@map("scans")
+}
+
+model Endpoint {
+  id                  String          @id @default(uuid())
+  projectId           String
+  project             Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  scanId              String?
+  scan                Scan?           @relation(fields: [scanId], references: [id], onDelete: SetNull)
+  method              HttpMethod
+  url                 String
+  path                String
+  source              DiscoverySource @default(OPENAPI)
+  confidence          ConfidenceLevel @default(HIGH)
+  authRequired        Boolean         @default(false)
+  authType            AuthType        @default(NONE)
+  description         String?
+  tags                Json?           @default("[]")
+  queryParameters     Json?           @default("[]")
+  headers             Json?           @default("{}")
+  requestBody         Json?
+  responseStatus      Int?
+  responseContentType String?
+  responseSchema      Json?
+  isMutation          Boolean         @default(false)
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  loadTests           LoadTest[]
+
+  @@unique([projectId, method, path])
+  @@index([projectId])
+  @@map("endpoints")
+}
+
+model LoadTest {
+  id                 String          @id @default(uuid())
+  projectId          String
+  project            Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  endpointId         String?
+  endpoint           Endpoint?       @relation(fields: [endpointId], references: [id], onDelete: SetNull)
+  name               String
+  status             LoadTestStatus  @default(QUEUED)
+  preset             LoadTestPreset  @default(SMOKE)
+  targetUrl          String
+  method             HttpMethod      @default(GET)
+  headers            String?         // Encrypted at rest
+  body               Json?
+  authConfig         String?         // Encrypted at rest
+  vus                Int             @default(10)
+  durationSeconds    Int             @default(30)
+  rampUpSeconds      Int             @default(5)
+  steadyStateSeconds Int             @default(20)
+  rampDownSeconds    Int             @default(5)
+  thresholds         Json            @default("[]")
+  stoppedReason      String?
+  startedAt          DateTime?
+  endedAt            DateTime?
+  createdAt          DateTime        @default(now())
+  result             LoadTestResult?
+  metrics            LoadTestMetric[]
+
+  @@index([projectId])
+  @@index([status])
+  @@map("load_tests")
+}
+
+model LoadTestResult {
+  id                  String      @id @default(uuid())
+  loadTestId          String      @unique
+  loadTest            LoadTest    @relation(fields: [loadTestId], references: [id], onDelete: Cascade)
+  totalRequests       Int         @default(0)
+  successfulRequests  Int         @default(0)
+  failedRequests      Int         @default(0)
+  avgRps              Float       @default(0)
+  avgLatencyMs        Float       @default(0)
+  minLatencyMs        Float       @default(0)
+  maxLatencyMs        Float       @default(0)
+  p50Ms               Float       @default(0)
+  p90Ms               Float       @default(0)
+  p95Ms               Float       @default(0)
+  p99Ms               Float       @default(0)
+  errorRatePercent    Float       @default(0)
+  httpStatusBreakdown Json        @default("{}")
+  thresholdsSummary   Json        @default("[]")
+  stdoutLog           String?
+  createdAt           DateTime    @default(now())
+
+  @@map("load_test_results")
+}
+
+model LoadTestMetric {
+  id                 String    @id @default(uuid())
+  loadTestId         String
+  loadTest           LoadTest  @relation(fields: [loadTestId], references: [id], onDelete: Cascade)
+  timestamp          DateTime  @default(now())
+  vus                Int       @default(0)
+  rps                Int       @default(0)
+  latencyAvg         Float     @default(0)
+  latencyMin         Float     @default(0)
+  latencyMax         Float     @default(0)
+  latencyP50         Float     @default(0)
+  latencyP90         Float     @default(0)
+  latencyP95         Float     @default(0)
+  latencyP99         Float     @default(0)
+  errorRate          Float     @default(0)
+  totalRequests      Int       @default(0)
+  successfulRequests Int       @default(0)
+  failedRequests     Int       @default(0)
+  status2xx          Int       @default(0)
+  status4xx          Int       @default(0)
+  status5xx          Int       @default(0)
+
+  @@index([loadTestId, timestamp])
+  @@map("load_test_metrics")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  action    String
+  ipAddress String?
+  details   Json?    @default("{}")
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([projectId])
+  @@map("audit_logs")
+}

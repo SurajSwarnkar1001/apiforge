@@ -1,0 +1,24 @@
+{
+  "name": "apiforge-monorepo",
+  "version": "1.0.0",
+  "description": "APIForge - Production-Grade API Discovery & Authorized Load-Testing Platform",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend",
+    "workers/discovery-worker",
+    "workers/loadtest-worker"
+  ],
+  "scripts": {
+    "dev": "concurrently \"npm run dev --workspace=backend\" \"npm run dev --workspace=frontend\" \"npm run dev --workspace=workers/discovery-worker\" \"npm run dev --workspace=workers/loadtest-worker\"",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "dev:discovery": "npm run dev --workspace=workers/discovery-worker",
+    "dev:loadtest": "npm run dev --workspace=workers/loadtest-worker",
+    "build": "npm run build --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
